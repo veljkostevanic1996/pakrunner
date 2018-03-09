@@ -1,22 +1,15 @@
 package rs.mivanovic.pakrunner;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -25,33 +18,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
-
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.lang.ProcessBuilder.Redirect;
-import java.lang.management.ManagementFactory;
-import java.math.BigInteger;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.SecureRandom;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.ws.rs.core.StreamingOutput;
 
 /**
  *
@@ -79,15 +50,23 @@ public class PakREST {
 	@Path("/proba")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response start() throws JSONException {
+	public Response start() throws JSONException, IOException {
 		JSONObject json = new JSONObject();
 		String direktorijum = PakUtil.getResource("ROOT_DIR");
 		json.put("ROOT_DIR", direktorijum);
-
+		
+		List<java.nio.file.Path> lista = Files.find(Paths.get(ROOT_DIR), 1, 
+        		(path, attr) -> String.valueOf(path).endsWith(".tab") ).collect(Collectors.toList());
+				
+		int i = 0;
+		for (java.nio.file.Path stavka : lista)
+			json.put (new Integer(i++).toString(),  new File(stavka.toString()).getName());
+			
+					
 		return Response.status(200).entity(json.toString()).build();
 	}
 
-	@GET
+	@POST
 	@Path("/start")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -115,7 +94,7 @@ public class PakREST {
 		return Response.status(200).entity(true).build();
 	}
 	
-	@GET
+	@POST
 	@Path("/stop")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -201,7 +180,16 @@ public class PakREST {
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getResults() throws IOException {
 
-		if (PakUtil.zipFiles(ROOT_DIR, RESULT_FILES.split("\\s*,\\s*"), RESULT_ZIP)) {
+		List<java.nio.file.Path> lista = Files.find(Paths.get(ROOT_DIR), 1, 
+        		(path, attr) -> String.valueOf(path).endsWith(".tab") ).collect(Collectors.toList());
+				
+		String[] fajlovi = new String[lista.size()];
+		
+		int i = 0;
+		for (java.nio.file.Path stavka : lista)
+			fajlovi[i++] = new File(stavka.toString()).getName();
+						
+		if ( i!=0 && PakUtil.zipFiles(ROOT_DIR, fajlovi, RESULT_ZIP) ) {
 			File arhiva = new File(ROOT_DIR + File.separator + RESULT_ZIP);
 
 			if (arhiva.isFile()) {
