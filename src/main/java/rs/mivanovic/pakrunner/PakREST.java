@@ -1,6 +1,8 @@
 package rs.mivanovic.pakrunner;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
@@ -23,6 +25,10 @@ import javax.ws.rs.core.UriInfo;
 
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  *
@@ -70,8 +76,21 @@ public class PakREST {
 	@Path("/start")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response startService() throws JSONException {
-
+	public Response startService(String input) throws JSONException {
+				
+	    InputParameters p = new InputParameters();
+	    
+	    try {
+		    // Napravi ulazni fajl za proracun ako je dat ulazni JSON
+		    if ( !input.isEmpty() ) {
+			    BufferedWriter writer = new BufferedWriter(new FileWriter(ROOT_DIR + File.separator + "Ulaz.csv"));
+			    writer.write( p.UlazCSV(input) );
+			    writer.close();
+		    }
+		} catch (IOException e) {
+			return Response.status(200).entity(false).build();
+		}
+	    
 		String[] commands = COMMAND.split("\\s+");
 		
 		// Ako je vec aktivan, prvo ga ubij
