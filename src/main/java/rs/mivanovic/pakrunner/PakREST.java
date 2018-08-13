@@ -26,6 +26,7 @@ import javax.ws.rs.core.UriInfo;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
+import java.io.IOException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,10 +40,10 @@ public class PakREST {
 
 	@Context
 	UriInfo uriInfo;
-
-	public static final String GUID = PakUtil.getResource("GUID");     //"d7f88f3e-3754-4132-8c7a-1b41722afd40";
-	public static final String ROOT_DIR = PakUtil.getResource("ROOT_DIR");  //"/home/milos/Desktop/Trebisnjica/pakrunner/" + GUID;
-	public static final String COMMAND = PakUtil.getResource("COMMAND");  //"./pakv.run";
+	
+	public static final String ROOT_DIR = PakUtil.getResource("ROOT_DIR");  //"/home/milos/Desktop/Trebisnjica/pakrunner/" + GUID;	
+	//public static final String GUID = PakUtil.getResource("GUID");     //"d7f88f3e-3754-4132-8c7a-1b41722afd40";
+	//public static final String COMMAND = PakUtil.getResource("COMMAND");  //"./pakv.run";
 	public static final String KILL_PROCESSES_COMMAND = PakUtil.getResource("KILL_PROCESSES_COMMAND");  //"./kill_processes.sh";
 	public static final String LOG_FILE = PakUtil.getResource("LOG_FILE");  //"pak.log";
 	public static final String RESULT_ZIP = PakUtil.getResource("RESULT_ZIP");  //"rezultati.zip";	
@@ -51,6 +52,14 @@ public class PakREST {
 	private static Process process = null;
 	private static long startTime = System.nanoTime();
 	private static boolean previousStatus = false;
+	
+	public static final String MASTER_DIR = PakUtil.getResource("MASTER_DIR");
+	public static final String RESULT_DIR = PakUtil.getResource("RESULT_DIR");
+	// Promenjeno da ne bude final
+	private static String GUID = "1111-1111-22222-33333";
+	private static String COMMAND = "./pakv.run";
+	
+	
 	
 	@GET
 	@Path("/proba")
@@ -77,32 +86,35 @@ public class PakREST {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response startService(String input) throws JSONException {
-				
-	    InputParameters p = new InputParameters();
-	    
+		
 	    try {
-		    // Napravi ulazni fajl za proracun ako je dat ulazni JSON
+	    	
 		    if ( !input.isEmpty() ) {
-			    BufferedWriter writer = new BufferedWriter(new FileWriter(ROOT_DIR + File.separator + "Ulaz.csv"));
-			    writer.write( p.UlazCSV(input) );
-			    writer.close();
-		    }
+		    	ObjectMapper objectMapper = new ObjectMapper();
+		    	JsonNode jsonNode = objectMapper.readTree(input);
+
+		    	GUID = jsonNode.get("guid").asText();
+		    	COMMAND = jsonNode.get("command").asText();
+		    }		    
 		} catch (IOException e) {
 			return Response.status(200).entity(false).build();
 		}
 	    
 		String[] commands = COMMAND.split("\\s+");
-		
+				
 		// Ako je vec aktivan, prvo ga ubij
 		stopService();
 		
 		try {
 			ProcessBuilder pb = new ProcessBuilder(commands);
-			File f = new File(ROOT_DIR);
+			String workdir =  RESULT_DIR + File.separator + GUID;
+			File f = new File(workdir);
+			f.mkdirs();
 			pb.directory(f);
 			
-			Files.deleteIfExists((new File(ROOT_DIR + File.separator + LOG_FILE)).toPath());
-			pb.redirectOutput(Redirect.appendTo(new File(ROOT_DIR + File.separator + LOG_FILE)));
+			
+			Files.deleteIfExists((new File(workdir + File.separator + LOG_FILE)).toPath());
+			pb.redirectOutput(Redirect.appendTo(new File(workdir + File.separator + LOG_FILE)));
 			
 			process = pb.start();
 			startTime = System.nanoTime();
@@ -132,12 +144,14 @@ public class PakREST {
         // Ubij sve procese koji u nazivu radnog direktorijuma imaju GUID
 		String command = KILL_PROCESSES_COMMAND + " " + GUID;
         String[] commands = command.split("\\s+");
+        
+        String workdir =  RESULT_DIR + File.separator + GUID;
 
         try {
             ProcessBuilder pb = new ProcessBuilder(commands);
-            File f = new File(ROOT_DIR);
+            File f = new File(workdir);
             pb.directory(f);
-            pb.redirectOutput(Redirect.appendTo(new File(ROOT_DIR+File.separator+LOG_FILE)));
+            pb.redirectOutput(Redirect.appendTo(new File(workdir + File.separator + LOG_FILE)));
             pb.start();
 
         } catch (Exception e) {
@@ -174,7 +188,8 @@ public class PakREST {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public String[] getLogTail(@PathParam("lines") int lines) {
-		return PakUtil.tail(new File(ROOT_DIR + File.separator + LOG_FILE), lines);
+		String workdir =  RESULT_DIR + File.separator + GUID;
+		return PakUtil.tail(new File(workdir + File.separator + LOG_FILE), lines);
 	}
 	
 	@GET
@@ -182,8 +197,10 @@ public class PakREST {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response downloadLog() throws IOException {
+		
+		String workdir =  RESULT_DIR + File.separator + GUID;
 
-		File log = new File(ROOT_DIR + File.separator + LOG_FILE);
+		File log = new File(workdir + File.separator + LOG_FILE);
 
 		if (log.isFile()) {
 			ResponseBuilder response = Response.ok().entity((Object) log);
@@ -198,8 +215,10 @@ public class PakREST {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getResults() throws IOException {
+		
+		String workdir =  RESULT_DIR + File.separator + GUID;
 
-		List<java.nio.file.Path> lista = Files.find(Paths.get(ROOT_DIR), 1, 
+		List<java.nio.file.Path> lista = Files.find(Paths.get(workdir), 1, 
         		(path, attr) -> String.valueOf(path).endsWith(".tab") ).collect(Collectors.toList());
 				
 		String[] fajlovi = new String[lista.size()];
@@ -208,8 +227,8 @@ public class PakREST {
 		for (java.nio.file.Path stavka : lista)
 			fajlovi[i++] = new File(stavka.toString()).getName();
 						
-		if ( i!=0 && PakUtil.zipFiles(ROOT_DIR, fajlovi, RESULT_ZIP) ) {
-			File arhiva = new File(ROOT_DIR + File.separator + RESULT_ZIP);
+		if ( i!=0 && PakUtil.zipFiles(workdir, fajlovi, RESULT_ZIP) ) {
+			File arhiva = new File(workdir + File.separator + RESULT_ZIP);
 
 			if (arhiva.isFile()) {
 				ResponseBuilder response = Response.ok().entity((Object) arhiva);
