@@ -1,17 +1,12 @@
 package rs.mivanovic.pakrunner;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -50,8 +45,7 @@ public class PakREST {
 	public static final String ROOT_DIR = PakUtil.getResource("ROOT_DIR");
 	public static final String KILL_PROCESSES_COMMAND = PakUtil.getResource("KILL_PROCESSES_COMMAND");
 	public static final String LOG_FILE = PakUtil.getResource("LOG_FILE");
-	public static final String RESULT_ZIP = PakUtil.getResource("RESULT_ZIP");	
-	public static final String RESULT_FILES = PakUtil.getResource("RESULT_FILES");
+	public static final String RESULT_ZIP = PakUtil.getResource("RESULT_ZIP");
 	
 	public static final String MASTER_DIR = PakUtil.getResource("MASTER_DIR");
 	public static final String WORKING_DIR_ROOT = PakUtil.getResource("RESULT_DIR");
@@ -108,7 +102,7 @@ public class PakREST {
 		    }		    
 		} catch (IOException e) {
 			json.put("status", false);
-			json.put("message", "I/O Exception in the service.");
+			json.put("message", "ERROR: JSON format problem.");
 			return Response.status(200).entity(json.toString()).build();
 		}
 	    
@@ -120,25 +114,23 @@ public class PakREST {
 			File workingDirectory = new File(workdir);
 			pb.directory(workingDirectory);
 			
-			// Obrisi dir ako postoji i iskopiraj sadrzaj mastera
-			FileUtils.deleteDirectory(workingDirectory);
+			// Obrisi direktorijum ako postoji i iskopiraj sadrzaj mastera
+			if (Files.exists(workingDirectory.toPath()))
+				FileUtils.deleteDirectory(workingDirectory);
+			
+			// Iskopiraj sadrzaj mastera
 			FileUtils.copyDirectory(new File(MASTER_DIR), workingDirectory);
 			
-			// Pokupi sve regularne fajlove iz direktorijuma
-			List<File> filesInFolder = Files.walk(Paths.get(workdir))
-                    .filter(Files::isRegularFile)
-                    .map(java.nio.file.Path::toFile)
-                    .collect(Collectors.toList());			
-			
 			// Setuj executable dozvole
-			for (File lf : filesInFolder)
-				lf.setExecutable(true);
-							
-			Files.deleteIfExists((new File(workdir + File.separator + LOG_FILE)).toPath());
-			pb.redirectOutput(Redirect.appendTo(new File(workdir + File.separator + LOG_FILE)));
+			PakUtil.directorySetExecutable(workdir);
+			
+			File logFile = new File(workdir + File.separator + LOG_FILE);
+			Files.deleteIfExists(logFile.toPath());
+			pb.redirectOutput(Redirect.appendTo(logFile));
 			
 			process = pb.start();
 			startTime = System.nanoTime();
+		
 		} catch (IOException e) {
 			json.put("status", false);
 			json.put("message", "I/O Exception in the service.");
@@ -174,14 +166,12 @@ public class PakREST {
 		
         // Ubij sve procese koji u nazivu radnog direktorijuma imaju GUID
 		String command = KILL_PROCESSES_COMMAND + " " + GUID;
-		System.out.println(command);
         String[] commands = command.split("\\s+");
         String workdir =  WORKING_DIR_ROOT + File.separator + GUID;
 
         try {
             ProcessBuilder pb = new ProcessBuilder(commands);
-            File f = new File(workdir);
-            pb.directory(f);
+            pb.directory(new File(workdir));
             pb.redirectOutput(Redirect.appendTo(new File(workdir + File.separator + LOG_FILE)));
             pb.start();
 	
@@ -256,32 +246,46 @@ public class PakREST {
 		return Response.status(Response.Status.NOT_FOUND).build();
 	}
 	
-	@GET
+	@POST
 	@Path("/getresults")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response getResults() throws IOException {
+	public Response getResults(String input) {
 		
-		String workdir =  WORKING_DIR_ROOT + File.separator + GUID;
+		try {
+	    	ObjectMapper objectMapper = new ObjectMapper();
+	    	JsonNode jsonNode = objectMapper.readTree(input);
+	    	
+	    	// Iscitaj i setuj GUID
+	    	GUID = jsonNode.get("guid").asText();
 
-		List<java.nio.file.Path> lista = Files.find(Paths.get(workdir), 1, 
-        		(path, attr) -> String.valueOf(path).endsWith(".tab") ).collect(Collectors.toList());
+	    	// Iscitaj listu fajlova za preuzimanje
+	    	String filesJSON = jsonNode.get("files").toString();
+	    	List<String> fileNames = objectMapper.readValue(filesJSON, List.class);
+		    	
+			String workdir =  WORKING_DIR_ROOT + File.separator + GUID;
+			
+			String[] fajlovi = new String[fileNames.size()];
+			
+			int i = 0;			
+			for (String fileName : fileNames)
+				fajlovi[i++] = fileName;
+			
+			if ( i!=0 && PakUtil.zipFiles(workdir, fajlovi, RESULT_ZIP) ) {
 				
-		String[] fajlovi = new String[lista.size()];
-		
-		int i = 0;
-		for (java.nio.file.Path stavka : lista)
-			fajlovi[i++] = new File(stavka.toString()).getName();
-						
-		if ( i!=0 && PakUtil.zipFiles(workdir, fajlovi, RESULT_ZIP) ) {
-			File arhiva = new File(workdir + File.separator + RESULT_ZIP);
+				File arhiva = new File(workdir + File.separator + RESULT_ZIP);
 
-			if (arhiva.isFile()) {
-				ResponseBuilder response = Response.ok().entity((Object) arhiva);
-				response.header("Content-Disposition", "attachment; filename=" + arhiva.getName());
-				return response.build();
+				if (arhiva.isFile()) {
+					ResponseBuilder response = Response.ok().entity((Object) arhiva);
+					response.header("Content-Disposition", "attachment; filename=" + arhiva.getName());
+					return response.build();
+				}
 			}
+	    	
+		} catch (IOException e) {
+			return Response.status(200).entity(false).build();
 		}
+
 		
 		return Response.status(Response.Status.NOT_FOUND).build();
 	}	

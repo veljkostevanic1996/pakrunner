@@ -1,7 +1,10 @@
 package rs.mivanovic.pakrunner;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.*;
 
 public class PakUtil {
@@ -116,6 +119,24 @@ public class PakUtil {
 		}
 
 		return value;
+	}
+	
+	/**
+	 * Rekurzivno setuje executable na celom direktorijumu
+	 * @param directory
+	 * @throws IOException
+	 */
+	public static void directorySetExecutable(String directory) throws IOException {
+		
+		// Pokupi sve regularne fajlove iz direktorijuma
+		List<File> filesInFolder = Files.walk(Paths.get(directory))
+                .filter(Files::isRegularFile)
+                .map(java.nio.file.Path::toFile)
+                .collect(Collectors.toList());			
+		
+		// Setuj executable dozvole
+		for (File f : filesInFolder)
+			f.setExecutable(true);
 	}
 
 }
