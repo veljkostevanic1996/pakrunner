@@ -45,7 +45,7 @@ public class PakUtil {
 	 * Vraca poslednjih 'lines' linija fajla
 	 */
 	public static String[] tail(File file, int lines) {
-
+		
 		RandomAccessFile fileHandler = null;
 		try {
 			fileHandler = new java.io.RandomAccessFile(file, "r");
