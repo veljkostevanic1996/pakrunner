@@ -3,6 +3,7 @@ package rs.mivanovic.pakrunner;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.*;
@@ -10,6 +11,27 @@ import java.util.zip.*;
 public class PakUtil {
 
 	public static final String CONFIG_FILE = "config.properties";
+	private static final int BUFFER_SIZE = 4096;
+	
+    /**
+     * Setuje UNIX dozvole na 755
+     * @param filePath 
+     * @throws java.io.IOException 
+     */
+    public static void setPermissions(String filePath) throws IOException {
+
+        Set<PosixFilePermission> perms = new HashSet<>();
+        perms.add(PosixFilePermission.OWNER_READ);
+        perms.add(PosixFilePermission.OWNER_WRITE);
+        perms.add(PosixFilePermission.OWNER_EXECUTE);        
+        perms.add(PosixFilePermission.GROUP_READ);
+        perms.add(PosixFilePermission.GROUP_EXECUTE);
+        perms.add(PosixFilePermission.OTHERS_READ);
+        perms.add(PosixFilePermission.OTHERS_EXECUTE);
+        
+        Files.setPosixFilePermissions(Paths.get(filePath), perms);
+    }
+	
 	
 	/*
 	 * Zipuje fajlove 'files' koji se salju kao niz u arhivu 'archiveName'. Vraca da
@@ -43,6 +65,64 @@ public class PakUtil {
 
 		return true;
 	}
+	
+    /**
+     * Raspakuje celu arhivu u direktorijum
+     * @param zipFile
+     * @param outputFolder
+     * @return
+     */
+	public static boolean unzip(String zipFile, String outputFolder) {
+        
+        try {
+            File folder = new File(outputFolder);
+            if (!folder.exists()) {
+                folder.mkdir();
+            }
+
+            ZipInputStream zipIn = new ZipInputStream(new FileInputStream(zipFile));
+            ZipEntry entry = zipIn.getNextEntry();
+            // iterates over entries in the zip file
+            while (entry != null) {
+                String filePath = outputFolder + File.separator + entry.getName();
+                if (!entry.isDirectory()) {
+                    // if the entry is a file, extracts it
+                    extractFile(zipIn, filePath);
+                    // Setuj dozvole
+                    setPermissions(filePath);
+                } else {
+                    // if the entry is a directory, make the directory
+                    File dir = new File(filePath);
+                    dir.mkdir();
+                }
+                zipIn.closeEntry();
+                entry = zipIn.getNextEntry();
+            }
+            zipIn.close();
+
+            return true;
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    /**
+     * Extracts a zip entry (file entry)
+     *
+     * @param zipIn
+     * @param filePath
+     * @throws IOException
+     */
+    private static void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
+        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath));
+        byte[] bytesIn = new byte[BUFFER_SIZE];
+        int read = 0;
+        while ((read = zipIn.read(bytesIn)) != -1) {
+            bos.write(bytesIn, 0, read);
+        }
+        bos.close();
+    }
+
 
 	/*
 	 * Vraca poslednjih 'lines' linija fajla
@@ -127,7 +207,7 @@ public class PakUtil {
 	 * @throws IOException
 	 */
 	public static void directorySetExecutable(String directory) throws IOException {
-		
+
 		// Pokupi sve regularne fajlove iz direktorijuma
 		List<File> filesInFolder = Files.walk(Paths.get(directory))
                 .filter(Files::isRegularFile)
@@ -138,5 +218,26 @@ public class PakUtil {
 		for (File f : filesInFolder)
 			f.setExecutable(true);
 	}
+	
+	/**
+	 * 
+	 * @param uploadedInputStream
+	 * @param uploadedFileLocation
+	 */
+	public static void saveToFile(InputStream uploadedInputStream,
+	        String uploadedFileLocation) throws IOException {
+
+        OutputStream out = null;
+        int read = 0;
+        byte[] bytes = new byte[BUFFER_SIZE];
+
+        out = new FileOutputStream(new File(uploadedFileLocation));
+	    while ((read = uploadedInputStream.read(bytes)) != -1) {
+	    	out.write(bytes, 0, read);
+	    }
+	    
+	    out.flush();
+	    out.close();
+	}	
 
 }
