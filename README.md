@@ -43,4 +43,7 @@
 ### Preimenovanje fajla u radnom direktorijumu (može i relativna putanja)
 `curl -d '{"guid":"3333-1111", "pathold":"Ulaz.csv", "pathnew":"Ulaz1.csv"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/renamefile`
 
+### Listing direktorijuma. Ako je `path` prazan, lista se radni direktorijum `guid`. Vraca posebno niz fajlova, a posebno niz direktorijuma.
+`curl -d '{"guid":"3333-4444", "path":"/L1"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/listfiles`
+
 

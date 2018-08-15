@@ -61,28 +61,6 @@ public class PakREST {
 	private static long startTime = System.nanoTime();
 	private static boolean previousStatus = false;
 
-	@GET
-	@Path("/listfiles/{guid}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response listfiles(@PathParam("guid") String guidInput) throws JSONException, IOException {
-		
-		String workdir = WORKING_DIR_ROOT + File.separator + guidInput;
-		JSONObject json = new JSONObject();
-		
-		json.put("task", guidInput);
-
-		List<java.nio.file.Path> lista = Files
-				.find(Paths.get(workdir), 1, (path, attr) -> String.valueOf(path).endsWith(""))
-				.collect(Collectors.toList());
-
-		int i = 0;
-		for (java.nio.file.Path stavka : lista)
-			json.put(new Integer(i++).toString(), new File(stavka.toString()).getName());
-
-		return Response.status(200).entity(json.toString()).build();
-	}
-
 	/**
 	 * 
 	 * @param input
@@ -669,5 +647,72 @@ public class PakREST {
 		return Response.status(200).entity(json.toString()).build();
 	}
 	
+	/**
+	 * Vraca listu fajlova iz radnog direktorijuma guid + path
+	 * @param input
+	 * @return
+	 * @throws JSONException
+	 */
+	@POST
+	@Path("/listfiles/")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response listfiles(String input) throws JSONException {
+		
+		JSONObject json = new JSONObject();
+		String guidInput;
+		String relativePath;
+
+		try {
+
+			ObjectMapper objectMapper = new ObjectMapper();
+			JsonNode jsonNode = objectMapper.readTree(input);
+
+			// Proveri da li je JSON u pravom formatu i setuj varijable
+			if (!jsonNode.has("guid") || !jsonNode.has("path") )
+				throw new JSONException("JSON format problem.");
+			else {
+				guidInput = jsonNode.get("guid").asText();
+				relativePath = jsonNode.get("path").asText();
+			}
+
+			String dirToList = WORKING_DIR_ROOT + File.separator + guidInput + File.separator + relativePath;
+
+			// Pronadji sve fajlove i direktorijume na zadatoj putanji
+			List<java.nio.file.Path> listOfPaths = Files
+				.find(Paths.get(dirToList), 1, (path, attr) -> true )
+				.collect(Collectors.toList());
+		
+			ArrayList<String> fileList = new ArrayList<>();
+			ArrayList<String> dirList = new ArrayList<>();
+		
+			// Stavi fajlove i direktorijume u posebne liste
+			for (java.nio.file.Path p : listOfPaths) {
+				if (p.toFile().isFile())
+					fileList.add(p.getFileName().toString());
+				else if (p.toFile().isDirectory())
+					dirList.add(p.getFileName().toString());
+			}
+			
+			json.put("status", true);
+			json.put("message", "OK");
+			json.put("task", guidInput);
+			json.put("path", relativePath);		
+			json.put("directories", dirList);
+			json.put("files", fileList);
+			
+			return Response.status(200).entity(json.toString()).build();
+			
+		} catch (JSONException e) {
+			json.put("status", false);
+			json.put("message", "ERROR: JSON format problem.");
+			return Response.status(200).entity(json.toString()).build();
+
+		} catch (IOException e) {
+			json.put("status", false);
+			json.put("message", "I/O Exception in the service.");
+			return Response.status(200).entity(json.toString()).build();
+		}
+	}
 	
 }
