@@ -46,7 +46,6 @@ public class PakREST {
 	@Context
 	UriInfo uriInfo;
 
-	public static final String ROOT_DIR = PakUtil.getResource("ROOT_DIR");
 	public static final String KILL_PROCESSES_COMMAND = PakUtil.getResource("KILL_PROCESSES_COMMAND");
 	public static final String LOG_FILE = PakUtil.getResource("LOG_FILE");
 	public static final String RESULT_ZIP = PakUtil.getResource("RESULT_ZIP");
