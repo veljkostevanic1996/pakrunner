@@ -41,7 +41,7 @@ U prvom slučaju se samo kreira radni direktorijum i iskopira odgovarajući sadr
 `curl -F 'file=@proba.zip' -F 'guid=3333-1111' -X POST http://147.91.200.5:8081/pakrunner/rest/api/uploadzip`
 
 ### Kopiranje fajla iz podfoldera u radni folder taska. Navodi se relativna putanja i ciljno ime fajla
-`curl -d '{"guid":"3333-1111", "path":"L1/ttt.txt", "name":"ttt-kopija.txt"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/localcopy`
+`curl -d '{"guid":"3333-1111", "path":"L10/ttt.txt", "name":"ttt-kopija.txt"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/localcopy`
 
 ### Kopiranje fajla iz radnog direktorijuma `guidsrc` u direktorijum `guiddest`
 `curl -d '{"guidsrc":"3333-1111", "guiddest":"3333-2222", "namesrc":"pom.xml", "namedest":"pom.xml"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/copyfiletasktotask`
@@ -53,6 +53,6 @@ U prvom slučaju se samo kreira radni direktorijum i iskopira odgovarajući sadr
 `curl -d '{"guid":"3333-1111", "pathold":"Ulaz.csv", "pathnew":"Ulaz1.csv"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/renamefile`
 
 ### Listing direktorijuma. Ako je `path` prazan, lista se radni direktorijum `guid`. Vraca posebno niz fajlova, a posebno niz direktorijuma.
-`curl -d '{"guid":"3333-4444", "path":"/L1"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/listfiles`
+`curl -d '{"guid":"3333-4444", "path":"/L10"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/listfiles`
 
 
