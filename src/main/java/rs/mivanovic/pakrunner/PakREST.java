@@ -83,23 +83,23 @@ public class PakREST {
 			JsonNode jsonNode = objectMapper.readTree(input);
 
 			// Proveri da li je JSON u pravom formatu i setuj varijable
-			if (!jsonNode.has("guid") || !jsonNode.has("command"))
+			if (!jsonNode.has("guid"))
 				throw new JSONException("JSON format problem.");
-			else {
+			else
 				GUID = jsonNode.get("guid").asText();
+			
+			// Pokrece se proces samo ako je zadat 'command' u pozivu
+			if (jsonNode.has("command"))
 				COMMAND = jsonNode.get("command").asText();
-			}
+			else
+				COMMAND = "";
 
-			String[] commands = COMMAND.split("\\s+");
-
-			ProcessBuilder pb = new ProcessBuilder(commands);
 			String workdir = WORKING_DIR_ROOT + File.separator + GUID;
 			File workingDirectory = new File(workdir);
-			pb.directory(workingDirectory);
 
 			// Obrisi direktorijum ako postoji i iskopiraj sadrzaj mastera
 			if (Files.exists(workingDirectory.toPath()))
-				FileUtils.deleteDirectory(workingDirectory);
+				throw new IOException();
 
 			// Iskopiraj sadrzaj mastera
 			FileUtils.copyDirectory(new File(MASTER_DIR), workingDirectory);
@@ -109,10 +109,16 @@ public class PakREST {
 
 			File logFile = new File(workdir + File.separator + LOG_FILE);
 			Files.deleteIfExists(logFile.toPath());
-			pb.redirectOutput(Redirect.appendTo(logFile));
-
-			process = pb.start();
-			startTime = System.nanoTime();
+			
+			// Startuj proces samo ako je pozvan sa argumentom 'command'
+			if (!COMMAND.isEmpty()) {
+				String[] commands = COMMAND.split("\\s+");
+				ProcessBuilder pb = new ProcessBuilder(commands);
+				pb.directory(workingDirectory);
+				pb.redirectOutput(Redirect.appendTo(logFile));	
+				process = pb.start();
+				startTime = System.nanoTime();
+			}
 
 		} catch (JSONException e) {
 			json.put("status", false);
@@ -126,7 +132,10 @@ public class PakREST {
 		}
 
 		json.put("status", true);
-		json.put("message", "OK");
+		if (COMMAND.isEmpty())
+			json.put("message", "OK - task " + GUID + " created");
+		else
+			json.put("message", "OK - task " + GUID + " created and started.");
 
 		return Response.status(200).entity(json.toString()).build();
 
@@ -713,5 +722,51 @@ public class PakREST {
 			return Response.status(200).entity(json.toString()).build();
 		}
 	}
+
+	
+	/**
+	 * Vraca listu taskova
+	 * @param input
+	 * @return
+	 * @throws JSONException
+	 */
+	@GET
+	@Path("/tasklist/")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response taskslist() throws JSONException {
+		
+		JSONObject json = new JSONObject();
+
+		try {
+
+			// Pronadji sve fajlove i direktorijume na zadatoj putanji
+			List<java.nio.file.Path> listOfPaths = Files
+				.find(Paths.get(WORKING_DIR_ROOT), 1, (path, attr) -> path.toFile().isDirectory() )
+				.collect(Collectors.toList());
+		
+			ArrayList<String> dirList = new ArrayList<>();
+		
+			// Stavi fajlove i direktorijume u posebne liste
+			for (java.nio.file.Path p : listOfPaths)
+					dirList.add(p.getFileName().toString());
+			
+			// Ukloni roditeljski direktorijum koji stavlja na prvo mesto
+			if (dirList.size()>1)
+				dirList.remove(0);
+			
+			json.put("status", true);
+			json.put("message", "OK");
+			json.put("tasks", dirList);
+			
+			return Response.status(200).entity(json.toString()).build();
+
+		} catch (IOException e) {
+			json.put("status", false);
+			json.put("message", "I/O Exception in the service.");
+			return Response.status(200).entity(json.toString()).build();
+		}
+	}
+	
 	
 }
