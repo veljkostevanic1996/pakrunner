@@ -9,8 +9,10 @@ curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081pakrunne
 
 ### Pokretanje proračuna
 `curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/start`
+
 ili
-curl -d '{"guid":"3333-4444", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/start
+
+`curl -d '{"guid":"3333-4444", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/start`
 
 U prvom slučaju se samo kreira radni direktorijum i iskopira odgovarajući sadržaj iz mastera. U drugom slučaju se pored toga startuje i proces definisan sa `command`.
 
