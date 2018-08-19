@@ -4,23 +4,20 @@
 
 ## Primeri poziva
 
-### Lista proračuna
-curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081pakrunner/rest/api/tasklist
+### Kreiranje novog proračuna
+`curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/createnew`
 
-### Pokretanje proračuna
-`curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/start`
-
-ili
-
+### Startovanje proračuna
 `curl -d '{"guid":"3333-4444", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/start`
-
-U prvom slučaju se samo kreira radni direktorijum i iskopira odgovarajući sadržaj iz mastera. U drugom slučaju se pored toga startuje i proces definisan sa `command`.
 
 ### Da li proračun radi?
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/isrunning/3333-4444`
 
 ### Zaustavljanje proračuna
 `curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/stop`
+
+### Lista proračuna
+`curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081pakrunner/rest/api/tasklist`
 
 ### Poslednjih `n` linija loga za odgovarajuci `guid`. Ako je n=0, preuzima se ceo log
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/logtail/3333-4444/4`

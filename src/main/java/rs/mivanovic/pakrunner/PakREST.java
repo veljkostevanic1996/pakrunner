@@ -60,6 +60,63 @@ public class PakREST {
 	private static long startTime = System.nanoTime();
 	private static boolean previousStatus = false;
 
+	
+	/**
+	 * 
+	 * @param input
+	 * @return
+	 * @throws JSONException
+	 */
+	@POST
+	@Path("/createnew")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response createNewTask(String input) throws JSONException {
+
+		JSONObject json = new JSONObject();
+
+		try {
+
+			ObjectMapper objectMapper = new ObjectMapper();
+			JsonNode jsonNode = objectMapper.readTree(input);
+
+			// Proveri da li je JSON u pravom formatu i setuj varijable
+			if (!jsonNode.has("guid"))
+				throw new JSONException("JSON format problem.");
+			else
+				GUID = jsonNode.get("guid").asText();
+			
+			String workdir = WORKING_DIR_ROOT + File.separator + GUID;
+			File workingDirectory = new File(workdir);
+
+			// Ako direktorijum GUID vec postoji, lansiraj izuzetak
+			if (Files.exists(workingDirectory.toPath()))
+				throw new IOException("Directory " + GUID + " already exists.");
+
+			// Iskopiraj sadrzaj mastera
+			FileUtils.copyDirectory(new File(MASTER_DIR), workingDirectory);
+
+			// Setuj executable dozvole
+			PakUtil.directorySetExecutable(workdir);
+
+		} catch (JSONException e) {
+			json.put("status", false);
+			json.put("message", "ERROR: JSON format problem.");
+			return Response.status(200).entity(json.toString()).build();
+
+		} catch (IOException e) {
+			json.put("status", false);
+			json.put("message", "IO Exception in the service: " + e.getMessage());
+			return Response.status(200).entity(json.toString()).build();
+		}
+
+		json.put("status", true);
+		json.put("message", "OK - task " + GUID + " created.");
+
+		return Response.status(200).entity(json.toString()).build();
+	}
+	
+	
 	/**
 	 * 
 	 * @param input
@@ -83,42 +140,29 @@ public class PakREST {
 			JsonNode jsonNode = objectMapper.readTree(input);
 
 			// Proveri da li je JSON u pravom formatu i setuj varijable
-			if (!jsonNode.has("guid"))
+			if (!jsonNode.has("guid") || !jsonNode.has("command"))
 				throw new JSONException("JSON format problem.");
-			else
+			else {
 				GUID = jsonNode.get("guid").asText();
-			
-			// Pokrece se proces samo ako je zadat 'command' u pozivu
-			if (jsonNode.has("command"))
 				COMMAND = jsonNode.get("command").asText();
-			else
-				COMMAND = "";
-
+			}
+			
 			String workdir = WORKING_DIR_ROOT + File.separator + GUID;
 			File workingDirectory = new File(workdir);
 
-			// Obrisi direktorijum ako postoji i iskopiraj sadrzaj mastera
-			if (Files.exists(workingDirectory.toPath()))
-				throw new IOException();
-
-			// Iskopiraj sadrzaj mastera
-			FileUtils.copyDirectory(new File(MASTER_DIR), workingDirectory);
-
-			// Setuj executable dozvole
-			PakUtil.directorySetExecutable(workdir);
+			// Ako ne postoji dati GUID, lanisraj IO izuzetak
+			if (!Files.exists(workingDirectory.toPath()))
+				throw new IOException("Task " + GUID + " does not exist.");
 
 			File logFile = new File(workdir + File.separator + LOG_FILE);
 			Files.deleteIfExists(logFile.toPath());
 			
-			// Startuj proces samo ako je pozvan sa argumentom 'command'
-			if (!COMMAND.isEmpty()) {
-				String[] commands = COMMAND.split("\\s+");
-				ProcessBuilder pb = new ProcessBuilder(commands);
-				pb.directory(workingDirectory);
-				pb.redirectOutput(Redirect.appendTo(logFile));	
-				process = pb.start();
-				startTime = System.nanoTime();
-			}
+			String[] commands = COMMAND.split("\\s+");
+			ProcessBuilder pb = new ProcessBuilder(commands);
+			pb.directory(workingDirectory);
+			pb.redirectOutput(Redirect.appendTo(logFile));	
+			process = pb.start();
+			startTime = System.nanoTime();
 
 		} catch (JSONException e) {
 			json.put("status", false);
@@ -127,18 +171,14 @@ public class PakREST {
 
 		} catch (IOException e) {
 			json.put("status", false);
-			json.put("message", "I/O Exception in the service.");
+			json.put("message", "IO Exception in the service: " + e.getMessage());
 			return Response.status(200).entity(json.toString()).build();
 		}
 
 		json.put("status", true);
-		if (COMMAND.isEmpty())
-			json.put("message", "OK - task " + GUID + " created");
-		else
-			json.put("message", "OK - task " + GUID + " created and started.");
+		json.put("message", "OK - task " + GUID + " started.");
 
 		return Response.status(200).entity(json.toString()).build();
-
 	}
 
 	/**
@@ -181,7 +221,7 @@ public class PakREST {
 
 		} catch (IOException e) {
 			json.put("status", false);
-			json.put("message", "ERROR: I/O problem in the service.");
+			json.put("message", "ERROR: IO problem in the service.");
 			return Response.status(200).entity(json.toString()).build();
 		}
 
@@ -420,7 +460,7 @@ public class PakREST {
 			
 		} catch(IOException e) {
 			json.put("status", false);
-			json.put("message", "ERROR: I/O problem.");
+			json.put("message", "ERROR: IO problem.");
 		}
 	
 		return Response.status(200).entity(json.toString()).build();
@@ -472,7 +512,7 @@ public class PakREST {
 
 		} catch (IOException e) {
 			json.put("status", false);
-			json.put("message", "I/O Exception in the service.");
+			json.put("message", "IO Exception in the service.");
 			return Response.status(200).entity(json.toString()).build();
 		}
 
@@ -533,7 +573,7 @@ public class PakREST {
 
 		} catch (IOException e) {
 			json.put("status", false);
-			json.put("message", "I/O Exception in the service.");
+			json.put("message", "IO Exception in the service.");
 			return Response.status(200).entity(json.toString()).build();
 		}
 
@@ -591,7 +631,7 @@ public class PakREST {
 
 		} catch (IOException e) {
 			json.put("status", false);
-			json.put("message", "I/O Exception in the service.");
+			json.put("message", "IO Exception in the service.");
 			return Response.status(200).entity(json.toString()).build();
 		}
 
@@ -645,7 +685,7 @@ public class PakREST {
 
 		} catch (IOException e) {
 			json.put("status", false);
-			json.put("message", "I/O Exception in the service.");
+			json.put("message", "IO Exception in the service.");
 			return Response.status(200).entity(json.toString()).build();
 		}
 
@@ -718,7 +758,7 @@ public class PakREST {
 
 		} catch (IOException e) {
 			json.put("status", false);
-			json.put("message", "I/O Exception in the service.");
+			json.put("message", "IO Exception in the service.");
 			return Response.status(200).entity(json.toString()).build();
 		}
 	}
@@ -763,7 +803,7 @@ public class PakREST {
 
 		} catch (IOException e) {
 			json.put("status", false);
-			json.put("message", "I/O Exception in the service.");
+			json.put("message", "IO Exception in the service.");
 			return Response.status(200).entity(json.toString()).build();
 		}
 	}
