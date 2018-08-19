@@ -4,25 +4,25 @@
 
 ## Primeri poziva
 
-### Kreiranje novog proračuna
+### Kreiranje novog posla
 `curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/createnew`
 
-### Startovanje proračuna
+### Startovanje posla
 `curl -d '{"guid":"3333-4444", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/start`
 
-### Da li proračun radi?
+### Da li posao radi?
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/isrunning/3333-4444`
 
-### Zaustavljanje proračuna
+### Zaustavljanje posla
 `curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/stop`
 
-### Lista proračuna
+### Lista poslova
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081pakrunner/rest/api/tasklist`
 
-### Poslednjih `n` linija loga za odgovarajuci `guid`. Ako je n=0, preuzima se ceo log
+### Poslednjih `n` linija loga za posao `guid`. Ako je n=0, preuzima se ceo log
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/logtail/3333-4444/4`
 
-### Preuzimanje log fajla za `guid`
+### Preuzimanje log fajla za posao `guid`
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/logdownload/3333-4444`
 
 ### Preuzmi rezultate u zip arhivi
@@ -34,10 +34,10 @@
 ### Brisanje svih poslova
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/removeall`
 
-### Upload zip-a i raspakovavanje u radni direktorijum taska `guid`
+### Upload zip-a i raspakovavanje u radni direktorijum posla `guid`
 `curl -F 'file=@proba.zip' -F 'guid=3333-1111' -X POST http://147.91.200.5:8081/pakrunner/rest/api/uploadzip`
 
-### Kopiranje fajla iz podfoldera u radni folder taska. Navodi se relativna putanja i ciljno ime fajla
+### Kopiranje fajla iz podfoldera u radni folder posla. Navodi se relativna putanja i ciljno ime fajla
 `curl -d '{"guid":"3333-1111", "path":"L10/ttt.txt", "name":"ttt-kopija.txt"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/localcopy`
 
 ### Kopiranje fajla iz radnog direktorijuma `guidsrc` u direktorijum `guiddest`
@@ -49,7 +49,7 @@
 ### Preimenovanje fajla u radnom direktorijumu (može i relativna putanja)
 `curl -d '{"guid":"3333-1111", "pathold":"Ulaz.csv", "pathnew":"Ulaz1.csv"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/renamefile`
 
-### Listing direktorijuma. Ako je `path` prazan, lista se radni direktorijum `guid`. Vraca posebno niz fajlova, a posebno niz direktorijuma.
+### Listing direktorijuma. Ako je `path` prazan, lista se radni direktorijum `guid`. Vraća posebno niz fajlova, a posebno niz direktorijuma.
 `curl -d '{"guid":"3333-4444", "path":"/L10"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/listfiles`
 
 
