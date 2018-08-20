@@ -60,6 +60,36 @@ public class PakREST {
 	private static long startTime = System.nanoTime();
 	private static boolean previousStatus = false;
 
+
+	/**
+	 * Vraca isti JSON koji mu je poslat. Ako ne moze da parsira JSON, vraca gresku
+	 * @param input
+	 * @return
+	 * @throws JSONException
+	 */
+	@POST
+	@Path("/echo")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response echo(String input) throws JSONException {
+
+		JsonNode jsonNode;
+		JSONObject json = new JSONObject();
+
+		try {
+
+			ObjectMapper objectMapper = new ObjectMapper();
+			jsonNode = objectMapper.readTree(input);
+
+		} catch (IOException e) {
+			json.put("status", false);
+			json.put("message", "IO Exception in the service: " + e.getMessage());
+			return Response.status(200).entity(json.toString()).build();
+		}
+
+		return Response.status(200).entity(jsonNode.toString()).build();
+	}
+
 	
 	/**
 	 * 
@@ -658,13 +688,13 @@ public class PakREST {
 			JsonNode jsonNode = objectMapper.readTree(input);
 
 			// Proveri da li je JSON u pravom formatu i setuj varijable
-			if (!jsonNode.has("guid") || !jsonNode.has("pathold") || !jsonNode.has("pathnew") )
-				throw new JSONException("JSON format problem.");
-			else {
-				guidInput = jsonNode.get("guid").asText();
-				pathOld = jsonNode.get("pathold").asText();
-				pathNew = jsonNode.get("pathnew").asText();
-			}
+			if (!jsonNode.has("guid")) throw new JSONException("JSON format problem (guid).");
+			if (!jsonNode.has("pathold")) throw new JSONException("JSON format problem (pathold).");
+			if (!jsonNode.has("pathnew")) throw new JSONException("JSON format problem (pathnew).");
+			
+			guidInput = jsonNode.get("guid").asText();
+			pathOld = jsonNode.get("pathold").asText();
+			pathNew = jsonNode.get("pathnew").asText();
 
 			File oldFile = new File (WORKING_DIR_ROOT + File.separator + guidInput + File.separator + pathOld);
 			File newFile = new File (WORKING_DIR_ROOT + File.separator + guidInput + File.separator + pathNew);
@@ -680,12 +710,12 @@ public class PakREST {
 			
 		} catch (JSONException e) {
 			json.put("status", false);
-			json.put("message", "ERROR: JSON format problem.");
+			json.put("message", e.getMessage());
 			return Response.status(200).entity(json.toString()).build();
 
 		} catch (IOException e) {
 			json.put("status", false);
-			json.put("message", "IO Exception in the service.");
+			json.put("message", "IO Exception in the service: " + e.getMessage());
 			return Response.status(200).entity(json.toString()).build();
 		}
 

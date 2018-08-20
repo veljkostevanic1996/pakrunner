@@ -4,6 +4,9 @@
 
 ## Primeri poziva
 
+### Echo poziv (za tesiranje)
+`curl -d '{"guid":"3333-5555", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/echo`
+
 ### Kreiranje novog posla
 `curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/createnew`
 
