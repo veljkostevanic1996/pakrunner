@@ -124,7 +124,8 @@ public class PakREST {
 				throw new IOException("Directory " + GUID + " already exists.");
 
 			// Iskopiraj sadrzaj mastera
-			FileUtils.copyDirectory(new File(MASTER_DIR), workingDirectory);
+			//FileUtils.copyDirectory(new File(MASTER_DIR), workingDirectory);
+			PakUtil.copyDirectoryNoRecursive(new File(MASTER_DIR), workingDirectory);
 
 			// Setuj executable dozvole
 			PakUtil.directorySetExecutable(workdir);
@@ -497,7 +498,7 @@ public class PakREST {
 	}
 	
 	/**
-	 * Kopiranje fajla iz podfoldera u radni folder za dati task GUID
+	 * Kopiranje fajla iz podfoldera mastera u radni folder za dati task GUID
 	 * @param input
 	 * @return
 	 * @throws JSONException 
@@ -525,15 +526,17 @@ public class PakREST {
 				destName = jsonNode.get("name").asText();
 			}
 
-			String workdir = WORKING_DIR_ROOT + File.separator + guidInput;
-			File destFile = new File (workdir + File.separator + destName);
+			File destFile = new File (WORKING_DIR_ROOT + File.separator + guidInput + File.separator + destName);
 			
 		    // Obrisi ako vec postoji
 			if (destFile.exists())
 		        destFile.delete();
 			
 			// Kopiranje samog fajla
-			FileUtils.copyFile( new File(workdir + File.separator + sourceRelativePath), destFile );
+			FileUtils.copyFile( new File(MASTER_DIR + File.separator + sourceRelativePath), destFile );
+			
+			// Setuj odgovarajuce dozvole
+			PakUtil.setPermissions(destFile.toString());
 		
 		} catch (JSONException e) {
 			json.put("status", false);
@@ -740,6 +743,7 @@ public class PakREST {
 		JSONObject json = new JSONObject();
 		String guidInput;
 		String relativePath;
+		String dirToList;
 
 		try {
 
@@ -754,7 +758,11 @@ public class PakREST {
 				relativePath = jsonNode.get("path").asText();
 			}
 
-			String dirToList = WORKING_DIR_ROOT + File.separator + guidInput + File.separator + relativePath;
+			// Ako je relativePath prazan, vraca radni dir, a ako nije vraca MASTER_DIR + relativePath
+			if (relativePath.isEmpty())
+				dirToList = WORKING_DIR_ROOT + File.separator + guidInput + File.separator + relativePath;
+			else
+				dirToList = MASTER_DIR + File.separator + relativePath;
 
 			// Pronadji sve fajlove i direktorijume na zadatoj putanji
 			List<java.nio.file.Path> listOfPaths = Files
@@ -771,6 +779,9 @@ public class PakREST {
 				else if (p.toFile().isDirectory())
 					dirList.add(p.getFileName().toString());
 			}
+			
+			// Ukloni prvi clan koji je naziv roditeljskog direktorijuma
+			dirList.remove(0);
 			
 			json.put("status", true);
 			json.put("message", "OK");
@@ -822,8 +833,7 @@ public class PakREST {
 					dirList.add(p.getFileName().toString());
 			
 			// Ukloni roditeljski direktorijum koji stavlja na prvo mesto
-			if (dirList.size()>1)
-				dirList.remove(0);
+			dirList.remove(0);
 			
 			json.put("status", true);
 			json.put("message", "OK");
