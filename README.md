@@ -1,10 +1,12 @@
 # pakrunner
 
-*Pakrunner* je RESTful servis za kontrolu i monitoring dugotrajnih proračuna. 
+*Pakrunner* je REST servis za kontrolu i monitoring dugotrajnih proračuna. Servis je nastao iz potrebe da se dugotrajni proračuni zasnovani na metodi konačnih elemenata pokreću preko standardizovanog REST interfejsa iz bilo koje aplikacije, iz bilo kog operativnog sistema, običnim HTTP pozivima. Pored mogućnosti pokretanja proračuna, servis omogućava i mnoge druge funkcionalnosti, kao što su čitanje logova u realnom vremenu, rad sa posebnim poslovima, upit statusa, operacije sa fajlovima i direktorijumima, _upload_ i preuzimanje rezultata proračuna itd.
+
+Zamišljeno je da servis radi u okviru bezbednog okruženja, kao što je VPN (_Virtual Private Network_), pa u protokol za sada nije ugrađeno ništa od sigurnosnih protokola. Implementacija sigurnosnih mehanizama planirana je za neku narednu verziju. 
 
 ## Primeri poziva
 
-### Echo poziv (za tesiranje)
+### Echo poziv (za testiranje)
 `curl -d '{"guid":"3333-5555", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/echo`
 
 ### Kreiranje novog posla
