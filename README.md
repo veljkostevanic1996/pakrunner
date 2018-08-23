@@ -5,7 +5,7 @@
 Zamišljeno je da servis radi u okviru bezbednog okruženja, kao što je VPN (_Virtual Private Network_), pa u protokol za sada nije ugrađeno ništa od sigurnosnih protokola. Implementacija sigurnosnih mehanizama planirana je za narednu verziju. Servis je napisan korišćenjem programskog jezika Java, kao i dodatnih biblioteka. Neke od dodatnih biblioteka su _Jackson_ za rad sa JSON dokumentima, _Apache Commons_ za rad sa fajl sistemom, _Jersey_ za realizaciju HTTP metoda POST i GET itd. Za izgradnju se koristi _Maven_. Kao _servlet_ kontejner testiran je _Apache Tomcat_, ali se može uzeti i neki drugi. Iako je softver testiran samo na Linuxu, trebalo bi da bez problema funkcioniše i na drugim operativnim sistemima koji podržavaju Javu, obzirom da su tokom razvoja izbegavani direktni sistemski pozivi. 
 
 Aplikacija *pakrunner* se isporučuje u standardnom WAR (_Web ARchive_) formatu, uz konfiguraciju u fajlu *config.properties*, koji postavlja tri varijable:
-`
+```
 # Direktorijum u kome se nalaze fajlovi potrebni za proračune
 MASTER_DIR = /home/milos/pakrunner/master
 # Radni direktorijum u kome se kreiraju poddirektorijumi sa poslovima
@@ -16,7 +16,7 @@ KILL_PROCESSES_COMMAND = /home/milos/pakrunner/kill_processes.sh
 LOG_FILE = pak.log
 # Naziv ZIP-a sa rezultatima proračuna
 RESULT_ZIP = results.zip
-`
+```
 ## Primeri poziva
 Osnovna jedinica rada je *posao*, koji se kreira pozivom */createnew* kopiranjem sadržaja direktorijuma *MASTER_DIR* u direktorijum *RESULT_DIR/GUID*. Kopiranje direktorijuma NIJE rekurzivno. Ukoliko dati posao već postoji, nastaje greška. Kreiranje posla NE POKREĆE proračun, već ga samo priprema:
 
