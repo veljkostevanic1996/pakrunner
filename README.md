@@ -25,29 +25,36 @@ Osnovna jedinica rada je **posao**, koji se kreira pozivom **/createnew**, kopir
 
 Izlaz većine poziva je JSON, sa dva obavezna polja. Prvo polje je **status** operacije, koje može biti **true** ili **false**, u zavisnosti da li je poziv ispravno obavljen ili je došlo do greške. Drugo obavezno polje povratnog JSON-a je **message**, koje u slučaju greške sadrži njen bliži opis. U nastavku će biti dati pojedinačni pozivi, sa nekim specifičnim detaljima. 
 
-### Echo poziv (za testiranje)
+### Echo poziv
+Za svrhu testiranja odziva servisa i ispravnosti JSON-a u smislu formata, postoji poziv koji vraća isti JSON koji mu je poslat:
 `curl -d '{"guid":"3333-5555", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/echo`
 
-
-### Startovanje posla
+### Pokretanje posla
+Kreiran posao se ne pokreće automatski. Potrebno je uz GUID navesti i komandu koja pokreće proračun:
 `curl -d '{"guid":"3333-4444", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/start`
 
-### Da li posao radi?
+### Upit statusa
+Status pokrenutog posla se može ispitati upitom. Vraća se **true** u slučaju da proračun trenutno radi, kao i vreme u sekundama koje je proveo u tekućem statusu:
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/isrunning/3333-4444`
 
 ### Zaustavljanje posla
+Posao se može u svakom trenutku zaustaviti jednostavnim pozivom. Terminacija procesa implicira i terminaciju procesa koje je osnovni proces eventualno pokrenuo. 
 `curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/stop`
 
 ### Lista poslova
+Lista tekućih poslova u direktorijumu RESULT_DIR može se dobiti sledećim GET pozivim:
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081pakrunner/rest/api/tasklist`
 
-### Poslednjih `n` linija loga za posao `guid`. Ako je n=0, preuzima se ceo log
+### Poslednjih nekoliko linija loga (*logtail*)
+Poslednjih `n` linija loga za posao GUID. Ako je `n`=0, preuzima se ceo log:
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/logtail/3333-4444/4`
 
-### Preuzimanje log fajla za posao `guid`
+### Preuzimanje log fajla
+za posao GUID, preuzimanje celog loga u formi priloga (*attachment*), vrši se pomoću:
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/logdownload/3333-4444`
 
 ### Preuzmi rezultate u zip arhivi
+
 `curl -d '{"guid":"3333-4444", "files":["proba.sh","pak.log"]}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/getresults --output rezultati.zip`
 
 ### Uklanjanje posla
