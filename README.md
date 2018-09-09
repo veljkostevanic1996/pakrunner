@@ -53,7 +53,7 @@ Vraća se GUID trenutno aktivnog posla i status **true** u slučaju da bilo koji
 ### Lista poslova
 Lista tekućih poslova u direktorijumu RESULT_DIR može se dobiti sledećim GET pozivim:
 
-`curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081pakrunner/rest/api/tasklist`
+`curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/tasklist`
 
 ### Poslednjih nekoliko linija loga (*logtail*)
 Poslednjih `n` linija loga za posao GUID. Ako je `n`=0, preuzima se ceo log:
