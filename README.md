@@ -45,6 +45,11 @@ Posao se može u svakom trenutku zaustaviti jednostavnim pozivom. Terminacija pr
 
 `curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/stop`
 
+### Trenutno aktivan posao
+Vraća se GUID trenutno aktivnog posla i status **true** u slučaju da bilo koji proračun trenutno radi. U suprotnom se vraća status **false** i prazan string za GUID.
+
+`curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/runningtask`
+
 ### Lista poslova
 Lista tekućih poslova u direktorijumu RESULT_DIR može se dobiti sledećim GET pozivim:
 
