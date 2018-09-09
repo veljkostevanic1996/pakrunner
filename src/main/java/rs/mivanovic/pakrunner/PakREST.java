@@ -293,6 +293,32 @@ public class PakREST {
 	}
 
 	/**
+	 * Vraca GUID proracuna ako proracun radi
+	 * @return
+	 * @throws JSONException
+	 */
+	@GET
+	@Path("/runningtask")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response runningGuid() throws JSONException {
+
+		JSONObject json = new JSONObject();
+
+		// Ako je proces ziv i poslati guid odgovara globalnom GUID-u
+		if (process != null && process.isAlive() ) {
+			json.put("status", true);
+			json.put("GUID", GUID);
+		} else {
+			json.put("status", false);
+			json.put("GUID", "");			
+		}
+
+		return Response.status(200).entity(json.toString()).build();
+	}
+	
+	
+	/**
 	 * Vraca poslednjih 'lines' linija loga. Ako je lines==0, vraca sve. 
 	 * @param guid
 	 * @param lines
