@@ -191,6 +191,7 @@ public class PakREST {
 			String[] commands = COMMAND.split("\\s+");
 			ProcessBuilder pb = new ProcessBuilder(commands);
 			pb.directory(workingDirectory);
+			pb.redirectErrorStream(true);
 			pb.redirectOutput(Redirect.appendTo(logFile));	
 			process = pb.start();
 			startTime = System.nanoTime();
@@ -247,6 +248,7 @@ public class PakREST {
 
 			ProcessBuilder pb = new ProcessBuilder(commands);
 			pb.directory(new File(workdir));
+			pb.redirectErrorStream(true);
 			pb.redirectOutput(Redirect.appendTo(new File(workdir + File.separator + LOG_FILE)));
 			pb.start();
 
