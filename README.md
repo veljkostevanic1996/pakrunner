@@ -113,5 +113,4 @@ Ako je `path` prazan, lista se radni direktorijum GUID, a ako `path` nije prazan
 ### Izvršavanje kratkog posla
 Ovaj poziv se koristi za razne pomoćne skriptove (kopiranje,, brisanje, promena prava pristupa...) za koje se ne očekuje da dugo traju. Poziv je blokirajući, a ovakvi pozivi se loguju u poseban log fajl pod nazivom **shorttask.log**.
 
-`curl -d '{"guid":"3333-4444", "command":"./proba1.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/runshorttask
-
+`curl -d '{"guid":"3333-4444", "command":"./proba1.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/runshorttask`
