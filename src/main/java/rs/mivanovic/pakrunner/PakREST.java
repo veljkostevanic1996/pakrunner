@@ -149,7 +149,7 @@ public class PakREST {
 	
 	
 	/**
-	 * 
+	 * Pokrece proracun
 	 * @param input
 	 * @return
 	 * @throws JSONException
@@ -875,6 +875,72 @@ public class PakREST {
 			return Response.status(200).entity(json.toString()).build();
 		}
 	}
-	
+
+	/**
+	 * Koristi se za pokretanje raznih pomocnih skriptova koji kratko traju
+	 * @param input
+	 * @return
+	 * @throws JSONException
+	 */
+	@POST
+	@Path("/runshorttask")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response runShortTask(String input) throws JSONException {
+
+		JSONObject json = new JSONObject();
+		String guid, command;
+
+		try {
+
+			ObjectMapper objectMapper = new ObjectMapper();
+			JsonNode jsonNode = objectMapper.readTree(input);
+
+			// Proveri da li je JSON u pravom formatu i setuj varijable
+			if (!jsonNode.has("guid") || !jsonNode.has("command"))
+				throw new JSONException("JSON format problem.");
+			else {
+				guid = jsonNode.get("guid").asText();
+				command = jsonNode.get("command").asText();
+			}
+			
+			String workdir = WORKING_DIR_ROOT + File.separator + guid;
+			File workingDirectory = new File(workdir);
+
+			// Ako ne postoji dati GUID, lanisraj IO izuzetak
+			if (!Files.exists(workingDirectory.toPath()))
+				throw new IOException("Task " + guid + " does not exist.");
+
+			// Loguje se u poseban shorttask.log fajl
+			File logFile = new File(workdir + File.separator + "shorttask.log");
+			
+			String[] commands = command.split("\\s+");
+			ProcessBuilder pb = new ProcessBuilder(commands);
+			pb.directory(workingDirectory);
+			pb.redirectErrorStream(true);
+			pb.redirectOutput(Redirect.appendTo(logFile));	
+			Process shortTask = pb.start();
+			shortTask.waitFor();
+
+		} catch (JSONException e) {
+			json.put("status", false);
+			json.put("message", "ERROR: JSON format problem.");
+			return Response.status(200).entity(json.toString()).build();
+		} catch (IOException e) {
+			json.put("status", false);
+			json.put("message", "IO Exception in the service: " + e.getMessage());
+			return Response.status(200).entity(json.toString()).build();
+		} catch (InterruptedException e) {
+			json.put("status", false);
+			json.put("message", "Process interupted: " + e.getMessage());
+			return Response.status(200).entity(json.toString()).build();
+		}
+
+		json.put("status", true);
+		json.put("message", "OK - " + command + " within task " + guid + " completed.");
+
+		return Response.status(200).entity(json.toString()).build();
+	}
+
 	
 }
