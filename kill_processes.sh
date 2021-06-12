@@ -5,7 +5,7 @@
 #
 GUID=$1
 
-PIDS=`lsof -u $USER | grep $GUID | grep cwd | awk '{print $2}'`
+PIDS=`lsof | grep $GUID | grep cwd | awk '{print $2}'`
 
 kill -6 $PIDS
 echo "Killed processes with PIDs: $PIDS"
