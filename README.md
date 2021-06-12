@@ -28,89 +28,89 @@ Izlaz većine poziva je JSON, sa dva obavezna polja. Prvo polje je `status` oper
 ### Echo poziv
 Za svrhu testiranja odziva servisa i ispravnosti JSON-a u smislu formata, postoji poziv koji vraća isti JSON koji mu je poslat:
 
-`curl -d '{"guid":"3333-5555", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/echo`
+`curl -d '{"guid":"3333-5555", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://localhost:8080/pakrunner/echo`
 
 ### Pokretanje posla
 Kreiran posao se ne pokreće automatski. Potrebno je uz GUID navesti i komandu koja pokreće proračun:
 
-`curl -d '{"guid":"3333-4444", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/start`
+`curl -d '{"guid":"3333-4444", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://localhost:8080pakrunner/start`
 
 ### Upit statusa
 Status pokrenutog posla se može ispitati upitom. Vraća se `true` u slučaju da proračun trenutno radi, kao i vreme u sekundama koje je proveo u tekućem statusu:
 
-`curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/isrunning/3333-4444`
+`curl -H "Content-Type: application/json" -X GET http://localhost:8080/pakrunner/isrunning/3333-4444`
 
 ### Zaustavljanje posla
 Posao se može u svakom trenutku zaustaviti jednostavnim pozivom. Terminacija procesa implicira i terminaciju procesa koje je osnovni proces eventualno pokrenuo. 
 
-`curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/stop`
+`curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://localhost:8080/pakrunner/stop`
 
 ### Trenutno aktivan posao
 Vraća se GUID trenutno aktivnog posla i status `true` u slučaju da bilo koji proračun trenutno radi. U suprotnom se vraća status `false` i prazan string za GUID.
 
-`curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/runningtask`
+`curl -H "Content-Type: application/json" -X GET http://localhost:8080/pakrunner/runningtask`
 
 ### Lista poslova
 Lista tekućih poslova u direktorijumu RESULT_DIR može se dobiti sledećim GET pozivim:
 
-`curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/tasklist`
+`curl -H "Content-Type: application/json" -X GET http://localhost:8080/pakrunner/tasklist`
 
 ### Poslednjih nekoliko linija loga (`logtail`)
 Poslednjih `n` linija loga za posao GUID. Ako je `n`=0, preuzima se ceo log:
 
-`curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/logtail/3333-4444/4`
+`curl -H "Content-Type: application/json" -X GET http://localhost:8080/pakrunner/logtail/3333-4444/4`
 
 ### Preuzimanje log fajla
 za posao GUID, preuzimanje celog loga u formi priloga (*attachment*), vrši se pomoću:
 
-`curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/logdownload/3333-4444`
+`curl -H "Content-Type: application/json" -X GET http://localhost:8080/pakrunner/logdownload/3333-4444`
 
 ### Preuzmi rezultate
 Rezultati (ili bilo koji fajlovi u argumentu `files`) iz nekog posla se mogu preuzeti u formi priloga pomoću poziva:
 
-`curl -d '{"guid":"3333-4444", "files":["proba.sh","pak.log"]}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/getresults --output rezultati.zip`
+`curl -d '{"guid":"3333-4444", "files":["proba.sh","pak.log"]}' -H "Content-Type: application/json" -X POST http://localhost:8080/pakrunner/getresults --output rezultati.zip`
 
 ### Uklanjanje posla
 Ceo posao se može ukloniti. Pre toga se zaustavlja ukoliko je proračun bio aktivan:
 
-`curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/remove/3333-4444/`
+`curl -H "Content-Type: application/json" -X GET http://localhost:8080/pakrunner/remove/3333-4444/`
 
 ### Brisanje svih poslova
 Svi poslovi se mogu obrisati jednim GET pozivom:
 
-`curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/removeall`
+`curl -H "Content-Type: application/json" -X GET http://localhost:8080/pakrunner/removeall`
 
 ### Upload ZIP-a u posao 
 *Upload* i raspakovavanje ZIP fajla u radni direktorijum posla GUID vrši se sledećim pozivom:
 
-`curl -F 'file=@proba.zip' -F 'guid=3333-1111' -X POST http://147.91.200.5:8081/pakrunner/rest/api/uploadzip`
+`curl -F 'file=@proba.zip' -F 'guid=3333-1111' -X POST http://localhost:8080/pakrunner/uploadzip`
 
 ### Kopiranje fajla 
 Kopiranje se vrši iz osnovnog MASTER_DIR ili nekog njegovog podfoldera u radni direktorijum posla GUID. Navodi se relativna putanja fajla koji se kopira i ciljno ime fajla: 
 
-`curl -d '{"guid":"3333-1111", "path":"L10/ttt.txt", "name":"ttt-kopija.txt"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/localcopy`
+`curl -d '{"guid":"3333-1111", "path":"L10/ttt.txt", "name":"ttt-kopija.txt"}' -H "Content-Type: application/json" -X POST http://localhost:8080/pakrunner/localcopy`
 
 ### Kopiranje fajla iz jednog posla u drugi
 Kopiranje se vrši iz radnog direktorijuma `guidsrc` u direktorijum `guiddest`, pri čemu je moguće zadati i novo ime fajla. 
 
-`curl -d '{"guidsrc":"3333-1111", "guiddest":"3333-2222", "namesrc":"pom.xml", "namedest":"pom.xml"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/copyfiletasktotask`
+`curl -d '{"guidsrc":"3333-1111", "guiddest":"3333-2222", "namesrc":"pom.xml", "namedest":"pom.xml"}' -H "Content-Type: application/json" -X POST http://localhost:8080/pakrunner/copyfiletasktotask`
 
 ### Brisanje fajla iz radnog direktorijuma
 U svrhu brisanja fajla iz radnog direktorijuma posla, koristi se sledeći poziv. Može se navesti i relativna putanja. 
 
-`curl -d '{"guid":"3333-1111", "path":"ttt.txt"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/removefile`
+`curl -d '{"guid":"3333-1111", "path":"ttt.txt"}' -H "Content-Type: application/json" -X POST http://localhost:8080/pakrunner/removefile`
 
 ### Preimenovanje fajla u radnom direktorijumu
 U svrhu preimenovanja fajla iz radnog direktorijuma posla, koristi se sledeći poziv. Mogu se navesti i relativne putanje. 
 
-`curl -d '{"guid":"3333-1111", "pathold":"Ulaz.csv", "pathnew":"Ulaz1.csv"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/renamefile`
+`curl -d '{"guid":"3333-1111", "pathold":"Ulaz.csv", "pathnew":"Ulaz1.csv"}' -H "Content-Type: application/json" -X POST http://localhost:8080/pakrunner/renamefile`
 
 ### Listing direktorijuma
 Ako je `path` prazan, lista se radni direktorijum GUID, a ako `path` nije prazan string, vraća se sadržaj direktorijuma `MASTER_DIR/path`! Vraća posebno niz fajlova, a posebno niz direktorijuma.
 
-`curl -d '{"guid":"3333-4444", "path":"/L10"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/listfiles`
+`curl -d '{"guid":"3333-4444", "path":"/L10"}' -H "Content-Type: application/json" -X POST http://localhost:8080/pakrunner/listfiles`
 
 ### Izvršavanje kratkog posla
 Ovaj poziv se koristi za razne pomoćne skriptove (kopiranje, brisanje, promena prava pristupa...) za koje se ne očekuje da dugo traju. Poziv je blokirajući, a ovakvi pozivi se loguju u poseban log fajl pod nazivom `shorttask.log`.
 
-`curl -d '{"guid":"3333-4444", "command":"./proba1.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/runshorttask`
+`curl -d '{"guid":"3333-4444", "command":"./proba1.sh"}' -H "Content-Type: application/json" -X POST http://localhost:8080/pakrunner/runshorttask`
