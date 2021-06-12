@@ -1,10 +1,10 @@
 # pakrunner
 
-**Pakrunner** je REST servis za kontrolu i monitoring dugotrajnih proračuna. Servis je nastao iz potrebe da se dugotrajni proračuni zasnovani na metodi konačnih elemenata pokreću preko standardizovanog REST interfejsa iz bilo koje aplikacije, sa bilo kojeg operativnog sistema, običnim HTTP pozivima. Pored mogućnosti pokretanja proračuna, servis omogućava i mnoge druge funkcionalnosti, kao što su čitanje logova u realnom vremenu, rad sa posebnim poslovima, upit statusa, operacije sa fajlovima i direktorijumima, _upload_ ulaznih fajlova, preuzimanje rezultata proračuna itd.
+**Pakrunner** je Spring REST servis za kontrolu i monitoring dugotrajnih proračuna. Servis je nastao iz potrebe da se dugotrajni proračuni zasnovani na metodi konačnih elemenata pokreću preko standardizovanog REST interfejsa iz bilo koje aplikacije, sa bilo kojeg operativnog sistema, običnim HTTP pozivima. Pored mogućnosti pokretanja proračuna, servis omogućava i mnoge druge funkcionalnosti, kao što su čitanje logova u realnom vremenu, rad sa posebnim poslovima, upit statusa, operacije sa fajlovima i direktorijumima, _upload_ ulaznih fajlova, preuzimanje rezultata proračuna itd.
 
-Zamišljeno je da servis radi u okviru bezbednog okruženja, kao što je VPN (_Virtual Private Network_), pa u protokol za sada nije ugrađeno ništa od sigurnosnih protokola. Implementacija sigurnosnih mehanizama planirana je za narednu verziju. Servis je napisan korišćenjem programskog jezika Java, kao i dodatnih biblioteka. Neke od dodatnih biblioteka su _Jackson_ za rad sa JSON dokumentima, _Apache Commons_ za rad sa fajl sistemom, _Jersey_ za realizaciju HTTP metoda POST i GET itd. Za izgradnju se koristi _Maven_. Kao _servlet_ kontejner testiran je _Apache Tomcat_, ali se može uzeti i neki drugi. Iako je softver testiran samo na Linuxu, trebalo bi da bez problema funkcioniše i na drugim operativnim sistemima koji podržavaju Javu, obzirom da su tokom razvoja izbegavani direktni sistemski pozivi. 
+Zamišljeno je da servis radi u okviru bezbednog okruženja, kao što je VPN (_Virtual Private Network_), pa u protokol za sada nije ugrađeno ništa od sigurnosnih protokola. Implementacija sigurnosnih mehanizama planirana je za narednu verziju. Servis je napisan korišćenjem programskog jezika Java, kao i dodatnih biblioteka. Neke od dodatnih biblioteka su `Jackson` za rad sa JSON dokumentima, `Apache Commons` za rad sa fajl sistemom, `Jersey` za realizaciju HTTP metoda POST i GET itd. Za izgradnju se koristi `Maven`. Iako je softver testiran samo na Linuxu, trebalo bi da bez problema funkcioniše i na drugim operativnim sistemima koji podržavaju Javu, obzirom da su tokom razvoja izbegavani direktni sistemski pozivi. 
 
-Aplikacija **pakrunner** se isporučuje u standardnom WAR (_Web ARchive_) formatu, uz konfiguraciju u fajlu **config.properties**, koji postavlja sledeće varijable:
+Konfiguracija se nalazi u fajlu `application.properties`, koji postavlja sledeće varijable:
 ```
 # Direktorijum u kome se nalaze fajlovi potrebni za proračune
 MASTER_DIR = /home/milos/pakrunner/master
@@ -18,12 +18,12 @@ LOG_FILE = pak.log
 RESULT_ZIP = results.zip
 ```
 ## Primeri poziva
-Osnovna jedinica rada je **posao**, koji se kreira pozivom **/createnew**, kopiranjem sadržaja direktorijuma **MASTER_DIR** u direktorijum **RESULT_DIR/GUID**. Kopiranje direktorijuma NIJE rekurzivno. Ukoliko dati posao već postoji, nastaje greška. Kreiranje posla NE POKREĆE proračun, već ga samo priprema:
+Osnovna jedinica rada je **posao**, koji se kreira pozivom `/createnew`, kopiranjem sadržaja direktorijuma `MASTER_DIR` u direktorijum `RESULT_DIR/GUID`. Kopiranje direktorijuma NIJE rekurzivno. Ukoliko dati posao već postoji, nastaje greška. Kreiranje posla NE POKREĆE proračun, već ga samo priprema.
 
 ### Kreiranje novog posla
 `curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/createnew`
 
-Izlaz većine poziva je JSON, sa dva obavezna polja. Prvo polje je **status** operacije, koje može biti **true** ili **false**, u zavisnosti da li je poziv ispravno obavljen ili je došlo do greške. Drugo obavezno polje povratnog JSON-a je **message**, koje u slučaju greške sadrži njen bliži opis. U nastavku će biti dati pojedinačni pozivi, sa nekim specifičnim detaljima. 
+Izlaz većine poziva je JSON, sa dva obavezna polja. Prvo polje je `status` operacije, koje može biti `true` ili `false`, u zavisnosti da li je poziv ispravno obavljen ili je došlo do greške. Drugo obavezno polje povratnog JSON-a je `message`, koje u slučaju greške sadrži njen bliži opis. U nastavku će biti dati pojedinačni pozivi, sa nekim specifičnim detaljima. 
 
 ### Echo poziv
 Za svrhu testiranja odziva servisa i ispravnosti JSON-a u smislu formata, postoji poziv koji vraća isti JSON koji mu je poslat:
@@ -36,7 +36,7 @@ Kreiran posao se ne pokreće automatski. Potrebno je uz GUID navesti i komandu k
 `curl -d '{"guid":"3333-4444", "command":"./proba.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/start`
 
 ### Upit statusa
-Status pokrenutog posla se može ispitati upitom. Vraća se **true** u slučaju da proračun trenutno radi, kao i vreme u sekundama koje je proveo u tekućem statusu:
+Status pokrenutog posla se može ispitati upitom. Vraća se `true` u slučaju da proračun trenutno radi, kao i vreme u sekundama koje je proveo u tekućem statusu:
 
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/isrunning/3333-4444`
 
@@ -46,7 +46,7 @@ Posao se može u svakom trenutku zaustaviti jednostavnim pozivom. Terminacija pr
 `curl -d '{"guid":"3333-4444"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/stop`
 
 ### Trenutno aktivan posao
-Vraća se GUID trenutno aktivnog posla i status **true** u slučaju da bilo koji proračun trenutno radi. U suprotnom se vraća status **false** i prazan string za GUID.
+Vraća se GUID trenutno aktivnog posla i status `true` u slučaju da bilo koji proračun trenutno radi. U suprotnom se vraća status `false` i prazan string za GUID.
 
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/runningtask`
 
@@ -55,7 +55,7 @@ Lista tekućih poslova u direktorijumu RESULT_DIR može se dobiti sledećim GET 
 
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/tasklist`
 
-### Poslednjih nekoliko linija loga (*logtail*)
+### Poslednjih nekoliko linija loga (`logtail`)
 Poslednjih `n` linija loga za posao GUID. Ako je `n`=0, preuzima se ceo log:
 
 `curl -H "Content-Type: application/json" -X GET http://147.91.200.5:8081/pakrunner/rest/api/logtail/3333-4444/4`
@@ -111,6 +111,6 @@ Ako je `path` prazan, lista se radni direktorijum GUID, a ako `path` nije prazan
 `curl -d '{"guid":"3333-4444", "path":"/L10"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/listfiles`
 
 ### Izvršavanje kratkog posla
-Ovaj poziv se koristi za razne pomoćne skriptove (kopiranje, brisanje, promena prava pristupa...) za koje se ne očekuje da dugo traju. Poziv je blokirajući, a ovakvi pozivi se loguju u poseban log fajl pod nazivom **shorttask.log**.
+Ovaj poziv se koristi za razne pomoćne skriptove (kopiranje, brisanje, promena prava pristupa...) za koje se ne očekuje da dugo traju. Poziv je blokirajući, a ovakvi pozivi se loguju u poseban log fajl pod nazivom `shorttask.log`.
 
 `curl -d '{"guid":"3333-4444", "command":"./proba1.sh"}' -H "Content-Type: application/json" -X POST http://147.91.200.5:8081/pakrunner/rest/api/runshorttask`
