@@ -1,7 +1,11 @@
 FROM ubuntu:focal
 
-# install dependencies
-RUN apt-get update -y && apt-get install openjdk-11-jre-headless lsof mpich zip bc python-is-python2 -y
+# Install dependencies
+RUN apt-get update -y && apt-get install openjdk-11-jre-headless lsof mpich zip bc python-is-python2 wget apt-transport-https -y
+
+# Install dotnet core
+RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && dpkg -i packages-microsoft-prod.deb
+RUN apt-get update -y && apt-get install dotnet-runtime-3.1 -y
 
 RUN addgroup --gid 1000 milos
 RUN adduser --disabled-password --gecos '' --uid 1000 --gid 1000 milos
